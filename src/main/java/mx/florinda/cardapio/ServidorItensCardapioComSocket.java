@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -21,7 +22,7 @@ public class ServidorItensCardapioComSocket {
 
         Executor executor = Executors.newFixedThreadPool(50);
 
-        try(ServerSocket serverSocket = new ServerSocket(8000)) {
+        try (ServerSocket serverSocket = new ServerSocket(8000)) {
             System.out.println("Subiu servidor!");
 
             while (true) {
@@ -77,24 +78,54 @@ public class ServidorItensCardapioComSocket {
                 clientOut.println();
                 clientOut.println(json);
 
-            } else if ("GET".equals(method) && "/itens-cardapio".equals(requestURI)) {
-                System.out.println("Chamou listagem de itens de cardápio");
-                List<ItemCardapio> listaItensCardapio = database.listaItensCardapio();
+            } else if ("GET".equals(method) && requestURI.contains("/itens-cardapio")) {
 
-                Gson gson = new Gson();
-                String json = gson.toJson(listaItensCardapio);
+                if ("/itens-cardapio".equals(requestURI)) {
+                    System.out.println("Chamou listagem de itens de cardápio");
+                    List<ItemCardapio> listaItensCardapio = database.listaItensCardapio();
 
-                clientOut.println("HTTP/1.1 200 OK");
-                clientOut.println("Content-type: application/json; charset=UTF-8");
-                clientOut.println();
-                clientOut.println(json);
-            } else if ("GET".equals(method) && "/itens-cardapio/total".equals(requestURI)) {
-                System.out.println("Chamou total de itens de cardápio");
-                int totalItens = database.totalItensCardapio();
+                    Gson gson = new Gson();
+                    String json = gson.toJson(listaItensCardapio);
 
-                clientOut.println("HTTP/1.1 200 OK");
-                clientOut.println();
-                clientOut.println(totalItens);
+                    clientOut.println("HTTP/1.1 200 OK");
+                    clientOut.println("Content-type: application/json; charset=UTF-8");
+                    clientOut.println();
+                    clientOut.println(json);
+                } else if ("/itens-cardapio/total".equals(requestURI)) {
+                    System.out.println("Chamou total de itens de cardápio");
+                    int totalItens = database.totalItensCardapio();
+
+                    clientOut.println("HTTP/1.1 200 OK");
+                    clientOut.println();
+                    clientOut.println(totalItens);
+                } else if (requestURI.contains("/itens-cardapio/")) {
+                    String[] itensCardapioChunks = requestURI.split("/");
+
+                    if (itensCardapioChunks.length == 3) {
+                        System.out.println("Chamou listagem de itens de cardápio");
+
+                        Long id = Long.parseLong(itensCardapioChunks[2]);
+
+                        Optional<ItemCardapio> opt = database.itemCardapioPorId(id);
+                        Gson gson = new Gson();
+                        String json = "";
+                        if (opt.isPresent()) {
+                            json = gson.toJson(opt.get());
+                        }
+                        clientOut.println("HTTP/1.1 200 OK");
+                        clientOut.println("Content-type: application/json; charset=UTF-8");
+                        clientOut.println();
+                        clientOut.println(json);
+                    } else {
+                        System.out.println("URI não encontrada: " + requestURI);
+                        clientOut.println("HTTP/1.1 404 Not Found");
+                    }
+
+                } else {
+                    System.out.println("URI não encontrada: " + requestURI);
+                    clientOut.println("HTTP/1.1 404 Not Found");
+                }
+
             } else if ("POST".equals(method) && "/itens-cardapio".equals(requestURI)) {
                 System.out.println("Chamou adição de itens de cardápio");
 
@@ -109,8 +140,24 @@ public class ServidorItensCardapioComSocket {
                 database.adicionaItemCardapio(item);
 
                 clientOut.println("HTTP/1.1 200 OK");
-            }
-            else {
+            } else if ("DELETE".equals(method) && requestURI.contains("/itens-cardapio/")) {
+                String[] itensCardapioChunks = requestURI.split("/");
+
+                if (itensCardapioChunks.length == 3) {
+                    System.out.println("Chamou listagem de itens de cardápio");
+
+                    Long id = Long.parseLong(itensCardapioChunks[2]);
+
+                    if (database.removeItemCardapio(id)) {
+                        clientOut.println("HTTP/1.1 200 OK");
+                    } else {
+                        clientOut.println("HTTP/1.1 500 Internal Server Error");
+                    }
+                } else {
+                    System.out.println("URI não encontrada: " + requestURI);
+                    clientOut.println("HTTP/1.1 404 Not Found");
+                }
+            } else {
                 System.out.println("URI não encontrada: " + requestURI);
                 clientOut.println("HTTP/1.1 404 Not Found");
             }

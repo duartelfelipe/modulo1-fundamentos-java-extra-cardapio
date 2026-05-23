@@ -16,8 +16,8 @@ public class SQLDatabase implements Database {
         String sql = "SELECT id, nome, descricao, categoria, preco, preco_promocional FROM item_cardapio";
         try (Connection conn =
                      DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123");
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()){
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 long id = rs.getLong("id");
@@ -45,8 +45,8 @@ public class SQLDatabase implements Database {
         String sql = "SELECT count(*) FROM item_cardapio";
         try (Connection conn =
                      DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123");
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()){
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
             int count = 0;
             if (rs.next()) {
@@ -63,14 +63,14 @@ public class SQLDatabase implements Database {
         String sql = "INSERT INTO item_cardapio (id, nome, descricao, categoria, preco, preco_promocional) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123");
              PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setLong(1, item.id());
-                ps.setString(2, item.nome());
-                ps.setString(3, item.descricao());
-                ps.setString(4, item.categoria().name());
-                ps.setBigDecimal(5, item.preco());
-                ps.setBigDecimal(6, item.precoPromocional());
+            ps.setLong(1, item.id());
+            ps.setString(2, item.nome());
+            ps.setString(3, item.descricao());
+            ps.setString(4, item.categoria().name());
+            ps.setBigDecimal(5, item.preco());
+            ps.setBigDecimal(6, item.precoPromocional());
 
-                ps.execute();
+            ps.execute();
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -79,18 +79,52 @@ public class SQLDatabase implements Database {
 
     @Override
     public Optional<ItemCardapio> itemCardapioPorId(Long id) {
-        throw new UnsupportedOperationException("TODO");
+        String sql = "SELECT id, nome, descricao, categoria, preco, preco_promocional FROM item_cardapio where id = ?";
+        try (Connection conn =
+                     DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123")) {
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                long id2 = rs.getLong("id");
+                String nome = rs.getString("nome");
+                String descricao = rs.getString("descricao");
+                String categoriaStr = rs.getString("categoria");
+                BigDecimal preco = rs.getBigDecimal("preco");
+                BigDecimal precoPromocional = rs.getBigDecimal("preco_promocional");
+
+                ItemCardapio.CategoriaCardapio categoria = ItemCardapio.CategoriaCardapio.valueOf(categoriaStr);
+
+                ItemCardapio itemCardapio = new ItemCardapio(id2, nome, descricao, categoria, preco, precoPromocional);
+
+                rs.close();
+                ps.close();
+
+                return Optional.of(itemCardapio);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return Optional.empty();
     }
 
     @Override
     public boolean removeItemCardapio(Long id) {
-        throw new UnsupportedOperationException("TODO");
+        String sql = "DELETE FROM item_cardapio where id = ?";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123");
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            return ps.execute();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean alteraPrecoItemCardapio(Long id, BigDecimal novoPreco) {
         throw new UnsupportedOperationException("TODO");
     }
-
-
 }

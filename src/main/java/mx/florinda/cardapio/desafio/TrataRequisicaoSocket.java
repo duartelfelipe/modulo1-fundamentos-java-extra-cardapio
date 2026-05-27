@@ -11,9 +11,9 @@ public class TrataRequisicaoSocket {
     public static void tratar(Socket clientSocket) {
 
         PrintStream clientOut = null;
-        String requestURI = null;
-        String method = null;
-        String httpVersion = null;
+        String requestURI;
+        String method;
+        String httpVersion;
 
         try (clientSocket) {
             String request = getRequest(clientSocket);

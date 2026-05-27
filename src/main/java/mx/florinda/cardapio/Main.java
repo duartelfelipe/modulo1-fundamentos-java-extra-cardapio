@@ -1,12 +1,15 @@
 package mx.florinda.cardapio;
 
 
+import mx.florinda.cardapio.desafio.ItemCardapioDAO;
+import mx.florinda.cardapio.desafio.ItemCardapioDAOJdbc;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        Database database = new SQLDatabase();
+        ItemCardapioDAO database = new ItemCardapioDAOJdbc();
 
         List<ItemCardapio> listaItensCardapio = database.listaItensCardapio();
         listaItensCardapio.forEach(System.out::println);

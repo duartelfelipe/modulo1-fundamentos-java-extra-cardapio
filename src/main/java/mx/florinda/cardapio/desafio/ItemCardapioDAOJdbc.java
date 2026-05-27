@@ -1,12 +1,17 @@
-package mx.florinda.cardapio;
+package mx.florinda.cardapio.desafio;
+
+import mx.florinda.cardapio.ItemCardapio;
 
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class SQLDatabase implements Database {
+public class ItemCardapioDAOJdbc implements ItemCardapioDAO {
 
     @Override
     public List<ItemCardapio> listaItensCardapio() {
@@ -14,8 +19,7 @@ public class SQLDatabase implements Database {
         List<ItemCardapio> itensCardapio = new ArrayList<>();
 
         String sql = "SELECT id, nome, descricao, categoria, preco, preco_promocional FROM item_cardapio";
-        try (Connection conn =
-                     DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123");
+        try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -32,7 +36,6 @@ public class SQLDatabase implements Database {
                 ItemCardapio itemCardapio = new ItemCardapio(id, nome, descricao, categoria, preco, precoPromocional);
 
                 itensCardapio.add(itemCardapio);
-
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -43,8 +46,7 @@ public class SQLDatabase implements Database {
     @Override
     public int totalItensCardapio() {
         String sql = "SELECT count(*) FROM item_cardapio";
-        try (Connection conn =
-                     DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123");
+        try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -61,7 +63,7 @@ public class SQLDatabase implements Database {
     @Override
     public void adicionaItemCardapio(ItemCardapio item) {
         String sql = "INSERT INTO item_cardapio (id, nome, descricao, categoria, preco, preco_promocional) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123");
+        try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, item.id());
             ps.setString(2, item.nome());
@@ -80,8 +82,7 @@ public class SQLDatabase implements Database {
     @Override
     public Optional<ItemCardapio> itemCardapioPorId(Long id) {
         String sql = "SELECT id, nome, descricao, categoria, preco, preco_promocional FROM item_cardapio where id = ?";
-        try (Connection conn =
-                     DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123")) {
+        try (Connection conn = ConnectionFactory.getConnection()) {
 
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setLong(1, id);
@@ -114,10 +115,12 @@ public class SQLDatabase implements Database {
     public boolean removeItemCardapio(Long id) {
         String sql = "DELETE FROM item_cardapio where id = ?";
 
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/cardapio", "root", "senha123");
+        try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
-            return ps.execute();
+
+            int r = ps.executeUpdate();
+            return r >= 1;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -125,6 +128,17 @@ public class SQLDatabase implements Database {
 
     @Override
     public boolean alteraPrecoItemCardapio(Long id, BigDecimal novoPreco) {
-        throw new UnsupportedOperationException("TODO");
+        String sql = "UPDATE item_cardapio set preco = ? where id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, novoPreco);
+            ps.setLong(2, id);
+
+            int r = ps.executeUpdate();
+            return r >= 1;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

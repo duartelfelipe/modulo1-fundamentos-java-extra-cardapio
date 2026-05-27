@@ -1,6 +1,7 @@
 package mx.florinda.cardapio;
 
 import com.google.gson.Gson;
+import mx.florinda.cardapio.desafio.ItemCardapioDAO;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,7 +11,7 @@ import java.util.List;
 public class GeradorItensCardapioJSON {
 
     public static void main(String[] args) throws IOException {
-        Database database = new InMemoryDatabase();
+        ItemCardapioDAO database = new InMemoryDatabase();
         List<ItemCardapio> listaItensCardapio = database.listaItensCardapio();
 
         Gson gson = new Gson();

@@ -1,12 +1,14 @@
 package mx.florinda.cardapio;
 
+import mx.florinda.cardapio.desafio.ItemCardapioDAO;
+
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import static mx.florinda.cardapio.ItemCardapio.CategoriaCardapio.*;
 
-public class InMemoryDatabase implements Database {
+public class InMemoryDatabase implements ItemCardapioDAO {
     
     private final Map<Long, ItemCardapio> itensPorId = new ConcurrentSkipListMap<>();
     private final Map<ItemCardapio, BigDecimal> auditoriaPrecos = new IdentityHashMap<>();
